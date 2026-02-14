@@ -156,17 +156,53 @@ with tab3:
 with tab4:
     st.subheader("All Data")
     if not df.empty:
-        # Add delete functionality
-        delete_col, _ = st.columns([1, 3])
-        with delete_col:
-            entry_to_delete = st.selectbox("Delete entry", options=[""] + [f"{row['date']} - {row['weight']} lbs" for _, row in df.iterrows()], key="delete_select")
-            if st.button("🗑️ Delete", key="delete_btn") and entry_to_delete:
-                date_to_delete = entry_to_delete.split(" - ")[0]
-                df = df[df['date'] != date_to_delete]
+        # Build list of entries for selectbox
+        df['display'] = df.apply(lambda r: f"{r['date']} | {r['weight']} lbs | {r['dose']}mg", axis=1)
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### 🗑️ Delete Entry")
+            entry_to_delete = st.selectbox("Select entry to delete", options=[""] + df['display'].tolist(), key="delete_select")
+            if st.button("Delete", key="delete_btn") and entry_to_delete:
+                idx = df[df['display'] == entry_to_delete].index[0]
+                df = df.drop(idx).reset_index(drop=True)
+                df = df.drop('display', axis=1)
                 save_data(df)
-                st.success(f"Deleted {date_to_delete}!")
+                st.success("Deleted!")
                 st.rerun()
         
+        with col2:
+            st.markdown("✏️ Edit Entry")
+            entry_to_edit = st.selectbox("Select entry to edit", options=[""] + df['display'].tolist(), key="edit_select")
+            if entry_to_edit:
+                idx = df[df['display'] == entry_to_edit].index[0]
+                row = df.iloc[idx]
+                
+                new_weight = st.number_input("Weight", value=float(row['weight']), key="edit_weight")
+                new_dose = st.number_input("Dose", value=float(row['dose']), key="edit_dose")
+                new_nausea = st.slider("Nausea", 0, 10, int(row['nausea']), key="edit_nausea")
+                new_fatigue = st.slider("Fatigue", 0, 10, int(row['fatigue']), key="edit_fatigue")
+                new_gi = st.slider("GI Issues", 0, 10, int(row['gi']), key="edit_gi")
+                new_sleep = st.slider("Sleep", 0, 10, int(row['sleep']), key="edit_sleep")
+                new_notes = st.text_area("Notes", value=str(row['notes']) if pd.notna(row['notes']) else "", key="edit_notes")
+                
+                if st.button("Save Changes", key="save_btn"):
+                    df.at[idx, 'weight'] = new_weight
+                    df.at[idx, 'dose'] = new_dose
+                    df.at[idx, 'nausea'] = new_nausea
+                    df.at[idx, 'fatigue'] = new_fatigue
+                    df.at[idx, 'gi'] = new_gi
+                    df.at[idx, 'sleep'] = new_sleep
+                    df.at[idx, 'notes'] = new_notes
+                    df = df.drop('display', axis=1)
+                    save_data(df)
+                    st.success("Saved!")
+                    st.rerun()
+        
+        df = df.drop('display', axis=1)
+        
+        st.markdown("### 📋 All Entries")
         st.dataframe(df.sort_values('date', ascending=False), use_container_width=True)
         
         # Download CSV
