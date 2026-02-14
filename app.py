@@ -156,6 +156,17 @@ with tab3:
 with tab4:
     st.subheader("All Data")
     if not df.empty:
+        # Add delete functionality
+        delete_col, _ = st.columns([1, 3])
+        with delete_col:
+            entry_to_delete = st.selectbox("Delete entry", options=[""] + [f"{row['date']} - {row['weight']} lbs" for _, row in df.iterrows()], key="delete_select")
+            if st.button("🗑️ Delete", key="delete_btn") and entry_to_delete:
+                date_to_delete = entry_to_delete.split(" - ")[0]
+                df = df[df['date'] != date_to_delete]
+                save_data(df)
+                st.success(f"Deleted {date_to_delete}!")
+                st.rerun()
+        
         st.dataframe(df.sort_values('date', ascending=False), use_container_width=True)
         
         # Download CSV
