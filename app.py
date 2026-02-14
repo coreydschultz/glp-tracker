@@ -92,11 +92,10 @@ tab1, tab2, tab3, tab4 = st.tabs(["📊 Weight Chart", "💉 Dosage Log", "🤢 
 with tab1:
     st.subheader("Weight Over Time")
     if len(df) > 1:
-        # Weight chart with trend line
+        # Weight chart
         fig = px.scatter(df, x='date', y='weight', 
                         title="Weight Loss Journey",
-                        labels={'date': 'Date', 'weight': 'Weight (lbs)'},
-                        trendline="lowess" if len(df) > 3 else None)
+                        labels={'date': 'Date', 'weight': 'Weight (lbs)'})
         fig.add_hline(y=start['weight'], line_dash="dash", line_color="red", 
                      annotation_text="Start")
         st.plotly_chart(fig, use_container_width=True)
